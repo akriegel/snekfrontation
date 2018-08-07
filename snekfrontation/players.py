@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from snekfrontation.cards import NumberCard
+
 
 class Player(ABC):
 
@@ -11,13 +13,14 @@ class Player(ABC):
     def name(self):
         pass
 
-class Sauron(ABC):
+
+class Sauron:
     """
     Singleton class for the Sauron player.
     """
 
     def __init__(self):
-        pass
+        self.hand = setup_sauron_hand()
 
     @property
     def name(self):
@@ -30,8 +33,15 @@ class Fellowship:
     """
 
     def __init__(self):
-        pass
+        self.hand = setup_fellowship_hand()
 
     @property
     def name(self):
         return 'Fellowship'
+
+
+def setup_sauron_hand():
+    return [NumberCard(0)]
+
+def setup_fellowship_hand():
+    return [NumberCard(0)]
