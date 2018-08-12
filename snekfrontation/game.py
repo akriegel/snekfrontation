@@ -1,7 +1,9 @@
-from enum import Enum, auto
-import random
+from typing import Tuple
 
-from snekfrontation.players import Fellowship, Sauron
+from snekfrontation.board import Board
+from snekfrontation.cards import DummyFellowshipCard, DummySauronCard
+from snekfrontation.combat import Combat, ResultFlags
+from snekfrontation.players import Player, Fellowship, Sauron
 
 
 class Game:
@@ -44,54 +46,46 @@ class Game:
             self.board.do_passive_move(src, piece_number, dst)
         self.switch_current_player()
 
-    # TODO: break out combat logic into new class to mutate defender in case of
-    # sam
+    def resolve_combat(self, move):
+        # TODO: check if ringbearer attacks mordor (gg)
 
-    def resolve_combat(self, player, src, attacker, dst):
-        flags = set()
+        # TODO
+        dummy_input = {
+            'sam_switch': False,
+            'sauron_card': DummySauronCard,
+            'fellow_card': DummyFellowshipCard,
+        }
+        input_callback = lambda _: dummy_input
 
-        defending_space = self.board.get_space(dst)
-        defender = random.choice(defending_space.pieces)
+        combat = Combat(
+            self.board,
+            move,
+            self.current_player,
+            self.other_player(self.current_player),
+            input_callback,
+        )
 
-        if attacker.name == 'Warg':
-            flags.add(CombatFlags.WARG)
+        stop_combat = False
+        while not stop_combat:
+            results = combat.handle_round()
 
-        if not CombatFlags.WARG in flags:
-            flags.update(apply_fellowship_text(attacker, defender))
-        flags.update(apply_sauron_text(attacker, defender))
-
-        if CombatFlags.GANDALF:
-            # sauron card first
-            # TODO
-            pass
-        else:
-            # cards simultaneously
-            # TODO
-            pass
-
-
-    def apply_fellowship_text(self, attacker, defender):
-        flags = set()
-        if attacker.name == 'Gandalf' or defender.name == 'Gandalf':
-            flags.add(CombatFlags.GANDALF)
-        if attacker.name == 'Pippin':
-            # retreat allowed
-            end = get_pippin_input()
-            if end:
-                flags.add(CombatFlags.END_BEFORE_CARDS)
-        if defender.name == 'Frodo' or defender.name == 'Sam':
-            if self.board.is_frodo_with_sam():
+            if ResultFlags.ATTACKER_DIES in results:
                 # TODO
                 pass
-        # TODO: lots more fellowship stuff
-        return flags
+            if ResultFlags.DEFENDER_DIES in results:
+                # TODO
+                pass
 
-    def apply_sauron_text(self, attacker, defender):
-        pass
-
-
-class CombatFlags(Enum):
-
-    WARG = auto()
-    GANDALF = auto()
-    END_BEFORE_CARDS = auto()
+            stop_combat = (
+                ResultFlags.ATTACKER_DIES in results
+                or (
+                    self.current_player == Sauron
+                    and ResultFlags.SAURON_RETREAT in results
+                )
+                or (
+                    self.current_player == Fellowship
+                    and ResultFlags.FELLOW_RETREAT in results
+                )
+                or ResultFlags.NO_DEFENDERS in results
+                or ResultFlags.SHELOB_RETREAT in results
+            )

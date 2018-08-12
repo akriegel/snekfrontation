@@ -43,5 +43,6 @@ class Fellowship:
 def setup_sauron_hand():
     return [NumberCard(0)]
 
+
 def setup_fellowship_hand():
     return [NumberCard(0)]

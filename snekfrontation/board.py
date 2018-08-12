@@ -1,7 +1,10 @@
-from typing import Tuple
+from typing import List, Tuple
 
 from snekfrontation.piece import Piece
-form snekfrontation.players import Player
+from snekfrontation.players import Player
+
+
+Coordinate = Tuple[int, int]
 
 
 class Space:
@@ -31,6 +34,27 @@ class Space:
 
     def is_full(self):
         return self.population == self.capacity
+
+
+class Move:
+    """
+    Args:
+        player (Player): player initiating move
+        src (Tuple[int, int]): coordinates for starting the move
+        dst (Tuple[int, int]): coordinates for ending the move
+    """
+
+    def __init__(
+        self,
+        player: Player,
+        piece: Piece,
+        src: Coordinate,
+        dst: Coordinate,
+    ):
+        self.player = player
+        self.piece = piece
+        self.src = src
+        self.dst = dst
 
 
 class Board:
@@ -71,30 +95,22 @@ class Board:
     def get_space(self, coordinates):
         return self.board[coordinates[0]][coordinates[1]]
 
-    def is_move_valid(
-            self,
-            player: Player,
-            src: Tuple[int, int],
-            piece_number: int,
-            dst: Tuple[int, int],
-        ):
+    def is_move_valid(self, move):
         """
-        Args:
-            player (Player): player initiating move
-            src (Tuple[int, int]): coordinates for starting the move
-            dst (Tuple[int, int]): coordinates for ending the move
+        Return:
+            bool: if move is an attack
         """
-        if src[0] < 0 or src[0] > 7:
+        if move.src[0] < 0 or move.src[0] > 7:
             raise ValueError('starting index off the board')
-        if src[1] > (4 - abs(src[0] - 3)):
+        if move.src[1] > (4 - abs(move.src[0] - 3)):
             raise ValueError('starting index off the board')
-        if dst[0] < 0 or dst[0] > 7:
+        if move.dst[0] < 0 or move.dst[0] > 7:
             raise ValueError('destination index off the board')
-        if dst[1] > (4 - abs(dst[0] - 3)):
+        if move.dst[1] > (4 - abs(move.dst[0] - 3)):
             raise ValueError('destination index off the board')
 
-        src_space = self.spaces[src[0]][src[1]]
-        if piece_number >= src_space.population or piece_number < 0:
+        move.src_space = self.spaces[move.src[0]][move.src[1]]
+        if piece_number >= move.src_space.population or piece_number < 0:
             raise ValueError('wrong piece number')
 
         piece = space_pieces[piece_number]
@@ -103,40 +119,43 @@ class Board:
         if not piece.is_alive():
             raise ValueError('piece is dead')
 
-        dst_space = self.spaces[dst[0]][dst[1]]
-        is_attacking = dst_space.player and player != dst_space.player
-        if not is_attacking and dst_space.is_full():
+        move.dst_space = self.spaces[move.dst[0]][move.dst[1]]
+        is_attacking = (
+            move.dst_space.player
+            and player != move.dst_space.player
+        )
+        if not is_attacking and move.dst_space.is_full():
             raise ValueError('destination is full')
 
         if is_special_case_for_piece(piece):
             # TODO
             raise NotImplementedError('')
 
-        if is_special_case_for_move(player, src, dst):
+        if is_special_case_for_move(player, move.src, move.dst):
             # TODO
             raise NotImplementedError('')
 
         if isinstance(player, Sauron):
-            if src[0] >= dst[0]:
+            if move.src[0] >= move.dst[0]:
                 raise ValueError('not moving forward')
-            if dst[0] - src[0] != 1:
+            if move.dst[0] - move.src[0] != 1:
                 raise ValueError('moving more than one space')
-            if src[0] < 3:
-                if not (src[1] <= dst[1] <= src[1] + 1):
+            if move.src[0] < 3:
+                if not (move.src[1] <= move.dst[1] <= move.src[1] + 1):
                     raise ValueError('moving too far laterally')
             else:
-                if not (src[1] - 1 <= dst[1] <= src[1]):
+                if not (move.src[1] - 1 <= move.dst[1] <= move.src[1]):
                     raise ValueError('moving too far laterally')
         else:  # is Fellowship
-            if dst[0] >= src[0]:
+            if move.dst[0] >= move.src[0]:
                 raise ValueError('not moving forward')
-            if src[0] - dst[0] != 1:
+            if move.src[0] - move.dst[0] != 1:
                 raise ValueError('moving more than one space')
-            if src[0] > 3:
-                if not (src[1] <= dst[1] <= src[1] + 1):
+            if move.src[0] > 3:
+                if not (move.src[1] <= move.dst[1] <= move.src[1] + 1):
                     raise ValueError('moving too far laterally')
             else:
-                if not (src[1] - 1 <= dst[1] <= src[1]):
+                if not (move.src[1] - 1 <= move.dst[1] <= move.src[1]):
                     raise ValueError('moving too far laterally')
 
         return is_attacking
@@ -144,27 +163,27 @@ class Board:
     def valid_moves(
             self, 
             player: Player,
-            src: Tuple[int, int],
+            src: Coordinate,
             piece_number: int,
-        ):
+        ) -> List[Move]:
         """
         TODO: documentation
         """
         valid_moves = []
-        candidate_destinations = [
-            i, j
-            for j in range(4)
-            for i in range(7)
-        ]
-        for dst in candidate_destinations:
-            try:
-                self.is_move_valid(player, src, piece_number, dst)
-            except ValueError:
-                continue
-            valid_moves.append(dst)
+        #candidate_destinations = [
+        #    (i, j)
+        #    for i in range(7)
+        #    for j in range(4)
+        #]
+        #for dst in candidate_destinations:
+        #    try:
+        #        self.is_move_valid(player, src, piece_number, dst)
+        #    except ValueError:
+        #        continue
+        #    valid_moves.append(dst)
         return valid_moves
 
-    def do_passive_move(self, src, piece_number, dst):
+    def apply_move(self, src, piece_number, dst):
         piece = self.spaces[src[0]][src[1]].pieces.pop(piece_number)
         self.spaces[dst[0]][dst[1]].pieces.append(piece)
 
