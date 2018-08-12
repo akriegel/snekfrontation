@@ -17,7 +17,7 @@ class Game:
         self.fellowship = Fellowship()
         self.current_player = self.sauron
 
-    def other_player(self, player):
+    def other_player(self, player: Player) -> Player:
         if isinstance(self.current_player, Sauron):
             return self.fellowship
         else:
@@ -26,22 +26,15 @@ class Game:
     def switch_current_player(self):
         self.current_player = self.other_player(self.current_player)
 
-    def handle_move(
-            self,
-            player: Player,
-            src: Tuple[int, int],
-            piece_number: int,
-            dst: Tuple[int, int],
-        ):
+    def handle_move(self, move: Move):
         """
         TODO
         """
         is_attacking = self.board.is_move_valid(player, src, piece_number, dst)
-        moving_piece = self.board.spaces[src[0]][src[1]].pieces[piece_number]
-        while is_attacking and moving_piece.is_alive():
+        while is_attacking and move.piece.is_alive():
             # is_attacking should be true as long as there are hostile pieces
             # in the destination
-            is_attacking = resolve_combat(player, src, moving_piece, dst)
+            is_attacking = self.resolve_combat(move)
         if moving_piece.is_alive():
             self.board.do_passive_move(src, piece_number, dst)
         self.switch_current_player()
