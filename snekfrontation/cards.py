@@ -27,6 +27,9 @@ class NumberCard(Card):
         self._allegiance = allegiance
         self._value = value
 
+    def __str__(self) -> str:
+        return f'{self.value} ({self.allegiance.name})'
+
     @property
     def allegiance(self) -> Player:
         return self._allegiance
@@ -45,6 +48,9 @@ class TextCard(Card):
     def __init__(self, allegiance: Player, text: str):
         self._allegiance = allegiance
         self._text = text
+
+    def __str__(self) -> str:
+        return f'{self.text} ({self.allegiance.name})'
 
     @property
     def allegiance(self) -> Player:

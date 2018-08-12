@@ -92,9 +92,9 @@ class Combat:
             self.defender.name == 'Frodo'
             and CombatFlags.FRODO_WITH_SAM in self.flags
         )
+        #response = self.input_callback(InputRequest('use sam switch'))
         if sam_can_intervene:
             # allow self.defender = sam
-            # response = self.input_callback(InputRequest('use sam switch'))
             pass
 
         # Card selection phase

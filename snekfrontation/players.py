@@ -19,8 +19,8 @@ class Sauron:
     Singleton class for the Sauron player.
     """
 
-    def __init__(self):
-        self.hand = setup_sauron_hand()
+    def __init__(self, hand=None):
+        self.hand = hand or setup_sauron_hand()
 
     @property
     def name(self):
@@ -32,8 +32,8 @@ class Fellowship:
     Singleton class for the Fellowship player.
     """
 
-    def __init__(self):
-        self.hand = setup_fellowship_hand()
+    def __init__(self, hand=None):
+        self.hand = hand or setup_fellowship_hand()
 
     @property
     def name(self):
