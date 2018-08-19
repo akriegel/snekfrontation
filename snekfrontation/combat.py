@@ -1,10 +1,9 @@
 from enum import Enum, auto
 import random
-from typing import Function, Set
+from typing import Callable, Set
 
 from snekfrontation.board import Board, Move, Player
-from snekfrontation.cards import NumberCard
-from snekfrontation.players import Fellowship, Sauron
+from snekfrontation.players import Fellowship, Sauron, NumberCard
 
 
 class CombatFlags(Enum):
@@ -38,7 +37,7 @@ class Combat:
             move: Move,
             player_atk: Player,
             player_def: Player,
-            input_callback: Function,
+            input_callback: Callable,
         ):
         """
         """
@@ -111,7 +110,7 @@ class Combat:
                 # TODO
                 pass
         # Copy values out of cards for mutating
-        sauron_attacking = attacker_card.allegiance == Sauron
+        sauron_attacking = self.defender.allegiance == Fellowship
         if sauron_attacking:
             sauron_card_value = attacker_card.value
             sauron_card_text = attacker_card.text
@@ -164,5 +163,17 @@ class Combat:
             result_flags.add(ResultFlags.DEFENDER_DIES)
         if attacker_str <= defender_str:
             result_flags.add(ResultFlags.ATTACKER_DIES)
+
+        ## FIXME: remove (testing only)
+        ## everyone dies majinD
+        #result_flags.add(ResultFlags.DEFENDER_DIES)
+        #result_flags.add(ResultFlags.ATTACKER_DIES)
+
+        # remove defender from the combat if they died
+        if ResultFlags.DEFENDER_DIES in result_flags:
+            self.defenders.remove(self.defender)
+
+        if not self.defenders:
+            result_flags.add(ResultFlags.NO_DEFENDERS)
 
         return result_flags

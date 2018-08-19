@@ -2,13 +2,15 @@
 Define the ``Board`` class to represent the board state in a game.
 """
 
-from typing import List, Optional, Tuple
+import copy
+from typing import Dict, Generator, List, Optional, Tuple
 
 from snekfrontation.pieces import Piece
 from snekfrontation.players import Player, Sauron
 
 
 Coordinate = Tuple[int, int]
+Layout = Dict[Piece, str]
 
 
 class Space:
@@ -26,19 +28,22 @@ class Space:
         self.capacity = capacity
         self.pieces = pieces or []
 
+    def __iter__(self):
+        return iter(self.pieces)
+
     def __str__(self) -> str:
-        pieces_str = ', '.join(self.pieces)
-        return f'{self.name} ({pieces_str})'
+        pieces_str = ', '.join(map(str, self.pieces))
+        return f'{self.name} [{pieces_str}]'
 
     @property
-    def player(self) -> Optional[Player]:
+    def allegiance(self) -> Optional[type]:
         """
         Return the player currently controlling this space, or ``None`` if
         there are no pieces in this space.
         """
         if not self.pieces:
             return None
-        return self.pieces[0].player
+        return self.pieces[0].allegiance
 
     @property
     def population(self) -> int:
@@ -53,6 +58,49 @@ class Space:
         pieces it is allowed to contain.
         """
         return self.population == self.capacity
+
+    def get_piece_named(self, piece_name) -> Optional[Piece]:
+        try:
+            return next(
+                piece
+                for piece in self.pieces
+                if piece.name == piece_name
+            )
+        except StopIteration:
+            return None
+
+
+DEFAULT_BOARD_SPACES = [
+    [Space('Mordor', 4)],
+    [
+        Space('Dagorlad', 2),
+        Space('Gondor', 2)
+    ],
+    [
+        Space('Mirkwood', 2),
+        Space('Fangorn', 2),
+        Space('Rohan', 2),
+    ],
+    [
+        Space('Hoher Pass', 1),
+        Space('Misty Mountains', 1),
+        Space('Moria', 1),
+        Space('Gap of Rohan', 1),
+    ],
+    [
+        Space('Rhudaur', 2),
+        Space('Eregoin', 2),
+        Space('Enedwaith', 2),
+    ],
+    [
+        Space('Arthedain', 2),
+        Space('Cardolan', 2),
+    ],
+    [Space('Alienland', 2)],
+]
+
+
+spaces = DEFAULT_BOARD_SPACES
 
 
 class Move:
@@ -87,35 +135,23 @@ class Board:
     Singleton class for the game board.
     """
 
-    def __init__(self):
-        self.spaces = [
-            [Space('Mordor', 4)],
-            [
-                Space('Dagorlad', 2),
-                Space('Gondor', 2)
-            ],
-            [
-                Space('Mirkwood', 2),
-                Space('Fangorn', 2),
-                Space('Rohan', 2),
-            ],
-            [
-                Space('Hoher Pass', 1),
-                Space('Misty Mountains', 1),
-                Space('Caradhorse (Moria)', 1),
-                Space('Gap of Rohan', 1),
-            ],
-            [
-                Space('Rhudaur', 2),
-                Space('Eregoin', 2),
-                Space('Enedwaith', 2),
-            ],
-            [
-                Space('Arthedain', 2),
-                Space('Cardolan', 2),
-            ],
-            [Space('Alienland', 2)],
-        ]
+    def __init__(self, spaces=None):
+        self.spaces = spaces
+        if not self.spaces:
+            self.spaces = copy.deepcopy(DEFAULT_BOARD_SPACES)
+
+    @staticmethod
+    def valid_starting_layout(layout: Layout):
+        # TODO: do real checking
+        # TODO: make sure no duplicate pieces
+        return True
+
+    def setup_board(self, layout: Layout):
+        if not self.valid_starting_layout(layout):
+            raise ValueError('invalid starting layout')
+        for piece, space_name in layout.items():
+            space = self.get_space_named(space_name)
+            space.pieces.append(piece)
 
     def get_space(self, coordinates: Coordinate) -> Optional[Space]:
         """
@@ -127,81 +163,97 @@ class Board:
         except IndexError:
             return None
 
-    def is_move_valid(self, move: Move):
+    def get_space_named(self, space_name: str) -> Optional[Space]:
+        try:
+            return next(
+                space
+                for row in self.spaces
+                for space in row
+                if space.name == space_name
+
+            )
+        except StopIteration:
+            return None
+
+    def is_move_valid(self, move: Move) -> Tuple[bool, str]:
         """
         Return:
             bool: if move is an attack
         """
         # Make sure move starts on the board.
         if not self.get_space(move.src):
-            raise ValueError(f'starting index {move.src} off the board')
+            return False, f'starting index {move.src} off the board'
         # Make sure move ends on the board.
         if not self.get_space(move.dst):
-            raise ValueError(f'destination index {move.dst} off the board')
+            return False, f'destination index {move.dst} off the board'
 
         # Make sure piece to move is in the starting space.
-        src_space = self.spaces[move.src[0]][move.src[1]]
+        src_space = self.get_space(move.src)
         if move.piece not in src_space.pieces:
-            raise ValueError('moved piece not in starting space')
+            return False, 'moved piece not in starting space'
 
         # Make sure piece belongs to the moving player.
-        if move.piece.player != move.player:
-            raise ValueError('wrong player')
+        if not isinstance(move.player, move.piece.allegiance):
+            return False, 'wrong player'
 
-        dst_space = self.spaces[move.dst[0]][move.dst[1]]
+        dst_space = self.get_space(move.dst)
 
         # If the move is not an attack, make sure the destination has room.
-        if not self.is_move_attack(move) and move.dst_space.is_full():
-            raise ValueError('destination is full')
+        if not self.is_move_attack(move) and dst_space.is_full():
+            return False, 'destination is full'
 
         if is_special_case_for_piece(move.piece):
             # TODO
-            raise NotImplementedError('')
+            return False, 'not implemented'
 
         if is_special_case_for_move(move):
             # TODO
-            raise NotImplementedError('')
+            return False, 'not implemented'
 
         # TODO: clean up using error classmethods
-        if move.player == Sauron:
+        if isinstance(move.player, Sauron):
             if move.src[0] >= move.dst[0]:
-                raise ValueError('not moving forward')
+                return False, 'not moving forward'
             if move.dst[0] - move.src[0] != 1:
-                raise ValueError('moving more than one space')
+                return False, 'moving more than one space'
             if move.src[0] < 3:
                 if not (move.src[1] <= move.dst[1] <= move.src[1] + 1):
-                    raise ValueError('moving too far laterally')
+                    return False, 'moving too far laterally'
             else:
                 if not (move.src[1] - 1 <= move.dst[1] <= move.src[1]):
-                    raise ValueError('moving too far laterally')
+                    return False, 'moving too far laterally'
         else:  # is Fellowship
             if move.dst[0] >= move.src[0]:
-                raise ValueError('not moving forward')
+                return False, 'not moving forward'
             if move.src[0] - move.dst[0] != 1:
-                raise ValueError('moving more than one space')
+                return False, 'moving more than one space'
             if move.src[0] > 3:
                 if not (move.src[1] <= move.dst[1] <= move.src[1] + 1):
-                    raise ValueError('moving too far laterally')
+                    return False, 'moving too far laterally'
             else:
                 if not (move.src[1] - 1 <= move.dst[1] <= move.src[1]):
-                    raise ValueError('moving too far laterally')
+                    return False, 'moving too far laterally'
+        return True, 'valid move'
 
     def is_move_attack(self, move: Move) -> bool:
         """Indicate whether the given move is an attack."""
         dst_space = self.get_space(move.dst)
-        return dst_space.player and move.player != dst_space.player
+        return (
+            dst_space.allegiance
+            and not isinstance(move.player, dst_space.allegiance)
+        )
 
     def valid_moves_from(
             self,
             player: Player,
             src: Coordinate,
             piece: Piece,
-        ) -> List[Move]:
+        ) -> Generator[Move, None, None]:
         """
         Return a list of all the allowed moves
         """
         if piece not in self.get_space(src).pieces:
-            raise ValueError(f'piece {piece} not in source space')
+            return False, f'piece {piece} not in source space'
         # Set up a generator of every imaginable move for this player and
         # piece, regardless of whether it's allowed.
         all_moves = (
@@ -210,7 +262,10 @@ class Board:
             for j in range(4)
         )
         # Yield the valid moves.
-        yield from filter(self.is_move_valid, all_moves)
+        for move in all_moves:
+            valid, msg = self.is_move_valid(move)
+            if valid:
+                yield move
 
     def apply_move(self, move: Move):
         """
@@ -226,13 +281,38 @@ class Board:
         # TODO
         return False
 
+    def find_space_for_piece(
+            self,
+            piece_name: str
+        ) -> Optional[Space]:
+        """
+        Return the space and piece for a piece with the name, or None if it's
+        not on the board.
+        """
+        flat_spaces = (space for row in self.spaces for space in row)
+        for space in flat_spaces:
+            for piece in space:
+                if piece.name == piece_name:
+                    return space
+        return None
+
+    def remove_piece(self, piece: Piece):
+        self.remove_piece_by_name(piece.name)
+
+    def remove_piece_by_name(self, piece_name: str):
+        space = self.find_space_for_piece(piece_name)
+        if space:
+            piece = space.get_piece_named(piece_name)
+            space.pieces.remove(piece)
+
 
 def is_special_case_for_piece(piece: Piece) -> bool:
     """
     Indicate whether the given piece may have a special case for its movement.
     If returning false, the piece must follow ordinary movement rules.
     """
-    raise NotImplementedError('')
+    # TODO
+    return False
 
 
 def is_special_case_for_move(move: Move) -> bool:
@@ -242,4 +322,5 @@ def is_special_case_for_move(move: Move) -> bool:
     false, these must be coordinates for a normal move (one space forward, and
     one left or right).
     """
-    raise NotImplementedError('')
+    # TODO
+    return False

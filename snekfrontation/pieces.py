@@ -16,6 +16,9 @@ class Piece(ABC):
     def __eq__(self, other) -> bool:
         return self.name == other.name
 
+    def __hash__(self) -> hash:
+        return hash(self.name)
+
     def __str__(self) -> str:
         return f'{self.name} ({self.strength})'
 
@@ -43,6 +46,14 @@ class Piece(ABC):
         """
         pass
 
+    @property
+    @abstractmethod
+    def is_revealed(self) -> bool:
+        """
+        Indicate whether the piece is permanently revealed (by Crebain etc.)
+        """
+        pass
+
 
 class SauronPiece(Piece):
     """
@@ -52,6 +63,7 @@ class SauronPiece(Piece):
     def __init__(self, name: str, strength: int):
         self._name = name
         self._strength = strength
+        self._is_revealed = False
 
     @property
     def allegiance(self):
@@ -65,6 +77,13 @@ class SauronPiece(Piece):
     def strength(self) -> int:
         return self._strength
 
+    @property
+    def is_revealed(self) -> bool:
+        return self._is_revealed
+
+    def reveal(self):
+        self._is_revealed = True
+
 
 class FellowshipPiece(Piece):
     """
@@ -74,6 +93,7 @@ class FellowshipPiece(Piece):
     def __init__(self, name: str, strength: int):
         self._name = name
         self._strength = strength
+        self._is_revealed = False
 
     @property
     def allegiance(self):
@@ -90,6 +110,13 @@ class FellowshipPiece(Piece):
     @property
     def has_ring(self):
         pass
+
+    @property
+    def is_revealed(self) -> bool:
+        return self._is_revealed
+
+    def reveal(self):
+        self._is_revealed = True
 
 
 DummyFellowshipPiece = FellowshipPiece('Dummy', 1)
