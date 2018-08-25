@@ -114,18 +114,52 @@ class Combat:
         Resolve a single round of combat between the attacking piece and *one*
         piece in the defending space.
         """
+        # defender not random if revealed
         self.defender = random.choice(self.defenders)
         self.add_flags()
 
-        # Text phase
+        # Fellowship text phase
+
+        sam_can_intervene = (
+            CombatFlags.FRODO_ATTACKED in self.flags
+            and CombatFlags.FRODO_WITH_SAM in self.flags
+        )
+        if sam_can_intervene:
+            # TODO Sam switch input
+            sam_switch = false
+            if sam_switch:
+                sam = next(
+                    (
+                        piece for piece in self.defenders
+                        if piece.name == 'Sam'
+                    ),
+                    None,
+                )
+                if sam:
+                    self.defender = sam
+                    self.flags.remove(CombatFlags.FRODO_ATTACKED)
+                    self.flags.add(CombatFlags.SAM_ATTACKED)
+                    self.flags.add(CombatFlags.SAM_IS_FIVE)
+        
+        if CombatFlags.FRODO_ATTACKED in self.flags:
+            # TODO Frodo retreat
+            pass
+        
+        if (
+            CombatFlags.SAM_ATTACKED in self.flags
+            and CombatFlags.FRODO_WITH_SAM in self.flags
+            and CombatFlags.SAM_IS_FIVE not in self.flags
+        ):
+            # TODO Reveal Frodo input
+            frodo_is_revealed = false
+            if frodo_is_revealed:
+                self.flags.add(CombatFlags.SAM_IS_FIVE)
+            
+        
         # Resolve all the "fast" text now (before cards); fellowship first
 
         # skip to end?
 
-        sam_can_intervene = (
-            self.defender.name == 'Frodo'
-            and CombatFlags.FRODO_WITH_SAM in self.flags
-        )
         #response = self.input_callback(InputRequest('use sam switch'))
         if sam_can_intervene:
             # allow self.defender = sam
