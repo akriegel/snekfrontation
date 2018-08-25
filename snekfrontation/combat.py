@@ -30,15 +30,14 @@ class ResultFlags(Enum):
 
 
 class Combat:
-
     def __init__(
-            self,
-            board: Board,
-            move: Move,
-            player_atk: Player,
-            player_def: Player,
-            input_callback: Callable,
-        ):
+        self,
+        board: Board,
+        move: Move,
+        player_atk: Player,
+        player_def: Player,
+        input_callback: Callable,
+    ):
         """
         """
         self.board = board
@@ -51,18 +50,18 @@ class Combat:
         self.defender = None
 
     def add_flags(self):
-        if self.attacker.name == 'Warg' or self.defender.name == 'Warg':
+        if self.attacker.name == "Warg" or self.defender.name == "Warg":
             self.flags.add(CombatFlags.WARG)
         if CombatFlags.WARG not in self.flags:
             self.apply_fellowship_flags()
         self.apply_sauron_flags()
 
     def apply_fellowship_flags(self):
-        if self.attacker.name == 'Gandalf' or self.defender.name == 'Gandalf':
+        if self.attacker.name == "Gandalf" or self.defender.name == "Gandalf":
             self.flags.add(CombatFlags.GANDALF)
-        if self.attacker.name == 'Pippin':
+        if self.attacker.name == "Pippin":
             self.flags.add(CombatFlags.PIPPIN_ATTACK)
-        if self.defender.name == 'Frodo' or self.defender.name == 'Sam':
+        if self.defender.name == "Frodo" or self.defender.name == "Sam":
             if self.board.is_frodo_with_sam():
                 self.flags.add(CombatFlags.FRODO_WITH_SAM)
         # TODO: more fellowship flags
@@ -88,10 +87,9 @@ class Combat:
         # skip to end?
 
         sam_can_intervene = (
-            self.defender.name == 'Frodo'
-            and CombatFlags.FRODO_WITH_SAM in self.flags
+            self.defender.name == "Frodo" and CombatFlags.FRODO_WITH_SAM in self.flags
         )
-        #response = self.input_callback(InputRequest('use sam switch'))
+        # response = self.input_callback(InputRequest('use sam switch'))
         if sam_can_intervene:
             # allow self.defender = sam
             pass
@@ -125,30 +123,30 @@ class Combat:
         # Card resolution phase
         result_flags = set()
         # Sauron text
-        if sauron_card_text == 'Magic':
+        if sauron_card_text == "Magic":
             # TODO
             pass
-        if sauron_card_text == 'Eye of Sauron':
-            fellow_card_text = ''
-        if sauron_card_text == 'Retreat':
+        if sauron_card_text == "Eye of Sauron":
+            fellow_card_text = ""
+        if sauron_card_text == "Retreat":
             # TODO
             # maybe end combat idk
             pass
         # Fellowship text
-        if fellow_card_text == 'Magic':
+        if fellow_card_text == "Magic":
             # TODO
             pass
-        if fellow_card_text == 'Retreat':
+        if fellow_card_text == "Retreat":
             # TODO
             # maybe end combat idk
             pass
-        if fellow_card_text == 'Noble Sac':
+        if fellow_card_text == "Noble Sac":
             # TODO
             # very end combat majinD
             result_flags.add(ResultFlags.ATTACKER_DIES)
             result_flags.add(ResultFlags.DEFENDER_DIES)
             pass
-        if fellow_card_text == 'Elven Cloak':
+        if fellow_card_text == "Elven Cloak":
             sauron_card_value = 0
 
         if sauron_attacking:
@@ -166,8 +164,8 @@ class Combat:
 
         ## FIXME: remove (testing only)
         ## everyone dies majinD
-        #result_flags.add(ResultFlags.DEFENDER_DIES)
-        #result_flags.add(ResultFlags.ATTACKER_DIES)
+        # result_flags.add(ResultFlags.DEFENDER_DIES)
+        # result_flags.add(ResultFlags.ATTACKER_DIES)
 
         # remove defender from the combat if they died
         if ResultFlags.DEFENDER_DIES in result_flags:

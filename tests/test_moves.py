@@ -8,22 +8,22 @@ def test_valid_moves(game):
     Test checking for valid moves on the board.
     """
     # Sauron has 2 moves with the single dummy piece
-    valid_moves = list(game.board.valid_moves_from(
-        game.sauron,
-        (0, 0),
-        game.board.spaces[0][0].pieces[0],
-    ))
+    valid_moves = list(
+        game.board.valid_moves_from(
+            game.sauron, (0, 0), game.board.spaces[0][0].pieces[0]
+        )
+    )
     assert len(valid_moves) == 2
     for move in valid_moves:
         # both moves should go from row 0 to row 1
         assert move.src[0] == 0
         assert move.dst[0] == 1
     # Fellowship has 2 moves with the single dummy piece
-    valid_moves = list(game.board.valid_moves_from(
-        game.fellowship,
-        (6, 0),
-        game.board.spaces[6][0].pieces[0],
-    ))
+    valid_moves = list(
+        game.board.valid_moves_from(
+            game.fellowship, (6, 0), game.board.spaces[6][0].pieces[0]
+        )
+    )
     assert len(valid_moves) == 2
     for move in valid_moves:
         # both moves should go from row 6 to row 5
@@ -36,11 +36,11 @@ def test_valid_moves_wrong_player(game):
     Test that trying to move pieces with the wrong player returns no valid
     moves.
     """
-    valid_moves = list(game.board.valid_moves_from(
-        game.fellowship,
-        (0, 0),
-        game.board.spaces[0][0].pieces[0],
-    ))
+    valid_moves = list(
+        game.board.valid_moves_from(
+            game.fellowship, (0, 0), game.board.spaces[0][0].pieces[0]
+        )
+    )
     assert not valid_moves
 
 
