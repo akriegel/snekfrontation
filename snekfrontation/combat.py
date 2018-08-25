@@ -8,13 +8,23 @@ from snekfrontation.players import Fellowship, Sauron, NumberCard
 
 class CombatFlags(Enum):
 
-    WARG = auto()
+    FRODO_ATTACKED = auto()
+    SAM_ATTACKED = auto()
+    FRODO_WITH_SAM = auto()
+    SAM_IS_FIVE = auto()
+    GIMLI = auto()
+    PIPPIN_ATTACK = auto()
+    LEGOLAS = auto()
+    MERRY = auto()
     GANDALF = auto()
+    MR_BOROMIRS_SNIPP_N_RIP = auto()
     ORC_SNIPP = auto()
     ORC_SNIPPED = auto()
-    PIPPIN_ATTACK = auto()
+    SHELOB = auto()
+    SARUMAN = auto()
+    WARG = auto()
+    CAVE_TROLL = auto()
     END_BEFORE_CARDS = auto()
-    FRODO_WITH_SAM = auto()
     SKIP_CARDS = auto()
 
 
@@ -58,17 +68,42 @@ class Combat:
         self.apply_sauron_flags()
 
     def apply_fellowship_flags(self):
-        if self.attacker.name == 'Gandalf' or self.defender.name == 'Gandalf':
-            self.flags.add(CombatFlags.GANDALF)
-        if self.attacker.name == 'Pippin':
-            self.flags.add(CombatFlags.PIPPIN_ATTACK)
+        # variant game: ask for Gwaihir the Windlord
+        if self.defender.name == 'Frodo':
+            self.flags.add(CombatFlags.FRODO_ATTACKED)
+        if self.defender.name == 'Sam':
+            self.flags.add(CombatFlags.SAM_ATTACKED)
         if self.defender.name == 'Frodo' or self.defender.name == 'Sam':
             if self.board.is_frodo_with_sam():
                 self.flags.add(CombatFlags.FRODO_WITH_SAM)
-        # TODO: more fellowship flags
+        if self.attacker.name == 'Gimli' or self.defender.name == 'Gimli':
+            self.flags.add(CombatFlags.GIMLI)
+        if self.attacker.name == 'Pippin':
+            self.flags.add(CombatFlags.PIPPIN_ATTACK)
+        if self.attacker.name == 'Legolas' or self.defender.name == 'Legolas':
+            self.flags.add(CombatFlags.LEGOLAS)
+        if self.attacker.name == 'Merry' or self.defender.name == 'Merry':
+            self.flags.add(CombatFlags.MERRY)
+        if self.attacker.name == 'Gandalf' or self.defender.name == 'Gandalf':
+            self.flags.add(CombatFlags.GANDALF)
+        if self.attacker.name == 'Boromir' or self.defender.name == 'Boromir':
+            self.flags.add(CombatFlags.MR_BOROMIRS_SNIPP_N_RIP)
 
     def apply_sauron_flags(self):
-        pass
+        if (
+            self.attacker.name == 'Orcs'
+            and CombatFlags.ORC_SNIPPED not in self.flags
+        ):
+            self.flags.add(CombatFlags.ORC_SNIPP)
+        if self.attacker.name == 'Shelob' or self.defender.name == 'Shelob':
+            self.flags.add(CombatFlags.SHELOB)
+        if self.attacker.name == 'Saruman' or self.defender.name == 'Saruman':
+            self.flags.add(CombatFlags.SARUMAN)
+        if (
+            self.attacker.name == 'Cave Troll'
+            or self.defender.name == 'Cave Troll'
+        ):
+            self.flags.add(CombatFlags.CAVE_TROLL)
 
     def reset_flags_for_round(self):
         new_flags = set()
