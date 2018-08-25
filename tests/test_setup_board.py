@@ -10,4 +10,4 @@ def test_space_string(mordor_space):
     try:
         assert str(mordor_space)
     except Exception as e:
-        raise AssertionError(f'space serialization failed: {e}')
+        raise AssertionError(f"space serialization failed: {e}")
