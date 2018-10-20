@@ -1,7 +1,8 @@
-from typing import Tuple
+from typing import Mapping
 
 from snekfrontation.board import Board, Move
 from snekfrontation.combat import Combat, ResultFlags
+from snekfrontation.input.input_handler import InputHandler
 from snekfrontation.pieces import FellowshipPiece
 from snekfrontation.players import Player, Fellowship, Sauron
 
@@ -11,11 +12,12 @@ class Game:
     Singleton class for tracking the whole game state.
     """
 
-    def __init__(self):
+    def __init__(self, input_handlers: Mapping[Player, InputHandler]):
         self.board = Board()
         self.sauron = Sauron()
         self.fellowship = Fellowship()
         self.current_player = self.sauron
+        self.handlers = input_handlers
 
     def other_player(self, player: Player) -> Player:
         if isinstance(self.current_player, Sauron):
@@ -28,19 +30,19 @@ class Game:
 
     def player_wins(self, player):
         # TODO
-        print(f'{player} wonnered')
+        print(f"{player} wonnered")
 
     def handle_move(self, move: Move):
         """
         TODO
         """
         if self.current_player != move.player:
-            raise ValueError(f'invalid move (not current player): {move}')
+            raise ValueError(f"invalid move (not current player): {move}")
         if not self.board.is_move_valid(move):
-            raise ValueError(f'invalid move: {move}')
+            raise ValueError(f"invalid move: {move}")
 
         # Fellowship wins if the ringbearer moves to Mordor.
-        move_to_mordor = self.board.get_space(move.dst).name == 'Mordor'
+        move_to_mordor = self.board.get_space(move.dst).name == "Mordor"
         ringbearer_to_mordor = (
             isinstance(move.piece, FellowshipPiece)
             and move.piece.has_ring
@@ -60,10 +62,7 @@ class Game:
             fellow_retreat = ResultFlags.FELLOW_RETREAT in combat_result
             attacker_retreated = (
                 isinstance(self.current_player, Sauron) and sauron_retreat
-                or (
-                    isinstance(self.current_player, Fellowship)
-                    and fellow_retreat
-                )
+                or (isinstance(self.current_player, Fellowship) and fellow_retreat)
             )
             if space and not attacker_retreated:
                 self.board.apply_move(move)
@@ -73,14 +72,23 @@ class Game:
         self.switch_current_player()
 
     def resolve_combat(self, move):
+        """
+        Given a move initiating combat, handle all steps necessary to resolve the
+        combat, which inclues:
+            - Resolving applicable piece text
+            - Selecting defender
+            - Resolving individual combat rounds (with playing cards if necessary)
+            - Removing dead pieces from the board
+            - TODO?
+        """
 
         # TODO: get real input
-        #dummy_input = {
+        # dummy_input = {
         #    'sam_switch': False,
         #    'sauron_card': DummySauronCard,
         #    'fellow_card': DummyFellowshipCard,
-        #}
-        #input_callback = lambda _: dummy_input
+        # }
+        # input_callback = lambda _: dummy_input
 
         # Set up a combat
         combat = Combat(

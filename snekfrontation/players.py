@@ -2,12 +2,14 @@ from abc import ABC, abstractmethod
 
 
 class Player(ABC):
-
     def __init__(self):
         pass
 
     def __str__(self) -> str:
         return self.name
+
+    def __hash__(self) -> hash:
+        return hash(self.name)
 
     @property
     @abstractmethod
@@ -25,7 +27,7 @@ class Sauron(Player):
 
     @property
     def name(self):
-        return 'Sauron'
+        return "Sauron"
 
 
 class Fellowship(Player):
@@ -38,11 +40,10 @@ class Fellowship(Player):
 
     @property
     def name(self):
-        return 'Fellowship'
+        return "Fellowship"
 
 
 class Card(ABC):
-
     @property
     @abstractmethod
     def value(self) -> int:
@@ -60,13 +61,12 @@ class Card(ABC):
 
 
 class NumberCard(Card):
-
     def __init__(self, allegiance: Player, value: int):
         self._allegiance = allegiance
         self._value = value
 
     def __str__(self) -> str:
-        return f'{self.value} ({self.allegiance.name})'
+        return f"{self.value} ({self.allegiance.name})"
 
     @property
     def allegiance(self) -> Player:
@@ -78,17 +78,16 @@ class NumberCard(Card):
 
     @property
     def text(self) -> str:
-        return ''
+        return ""
 
 
 class TextCard(Card):
-
     def __init__(self, allegiance: Player, text: str):
         self._allegiance = allegiance
         self._text = text
 
     def __str__(self) -> str:
-        return f'{self.text} ({self.allegiance.name})'
+        return f"{self.text} ({self.allegiance.name})"
 
     @property
     def allegiance(self) -> Player:

@@ -20,7 +20,7 @@ class Piece(ABC):
         return hash(self.name)
 
     def __str__(self) -> str:
-        return f'{self.name} ({self.strength})'
+        return f"{self.name} ({self.strength})"
 
     @property
     @abstractmethod
@@ -119,5 +119,5 @@ class FellowshipPiece(Piece):
         self._is_revealed = True
 
 
-DummyFellowshipPiece = FellowshipPiece('Dummy', 1)
-DummySauronPiece = SauronPiece('Dummy', 1)
+DummyFellowshipPiece = FellowshipPiece("Dummy", 1)
+DummySauronPiece = SauronPiece("Dummy", 1)
